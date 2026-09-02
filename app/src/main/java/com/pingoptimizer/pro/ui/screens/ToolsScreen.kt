@@ -52,7 +52,7 @@ fun ToolsScreen() {
     var selectedProfile by remember { mutableStateOf("BALANCED") }
     var hudActive by remember { mutableStateOf(false) }
     var crosshairActive by remember { mutableStateOf(false) }
-
+var thermalSync by remember { mutableStateOf(false) }
     // Real thermal monitoring via PowerManager (API 29+). Not a fake switch -
     // this reflects the device's actual reported thermal status.
     val thermalSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
