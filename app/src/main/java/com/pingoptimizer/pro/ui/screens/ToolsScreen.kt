@@ -33,9 +33,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import android.os.Build
 import android.os.PowerManager
-import com.pingoptimizer.pro.overlay.CrosshairOverlayService
-import com.pingoptimizer.pro.overlay.OverlayPermissionUtils
-import com.pingoptimizer.pro.overlay.PerformanceHudService
 import com.pingoptimizer.pro.ui.theme.*
 import com.pingoptimizer.pro.utils.GameModeManager
 
@@ -50,11 +47,8 @@ fun ToolsScreen() {
     var brightnessLock by remember { mutableStateOf(false) }
     var touchLock by remember { mutableStateOf(false) }
     var selectedProfile by remember { mutableStateOf("BALANCED") }
-    var hudActive by remember { mutableStateOf(false) }
-    var crosshairActive by remember { mutableStateOf(false) }
-var thermalSync by remember { mutableStateOf(false) }
-    // Real thermal monitoring via PowerManager (API 29+). Not a fake switch -
-    // this reflects the device's actual reported thermal status.
+    var thermalSync by remember { mutableStateOf(false) }
+
     val thermalSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
     var thermalMonitoring by remember { mutableStateOf(false) }
     var thermalStatusLabel by remember { mutableStateOf("Not monitoring") }
@@ -74,6 +68,7 @@ var thermalSync by remember { mutableStateOf(false) }
             }
         } else null
     }
+
     DisposableEffect(thermalMonitoring) {
         if (thermalSupported && thermalMonitoring && thermalListener != null) {
             powerManager.addThermalStatusListener(thermalListener)
@@ -118,7 +113,7 @@ var thermalSync by remember { mutableStateOf(false) }
                     dndEnabled = true
                 }
             }
-            else -> { // BALANCED: revert to defaults, no forced overrides
+            else -> { // BALANCED
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                     powerManager.isSustainedPerformanceModeSupported
                 ) {
@@ -134,7 +129,6 @@ var thermalSync by remember { mutableStateOf(false) }
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 dndEnabled = GameModeManager.isGameDndEnabled(context)
-                
                 val activity = context as? Activity
                 val flags = activity?.window?.attributes?.flags ?: 0
                 keepScreenOn = (flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0
@@ -227,15 +221,16 @@ var thermalSync by remember { mutableStateOf(false) }
             }
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                when (selectedProfile) {
+                text = when (selectedProfile) {
                     "POWER_SAVE" -> "Screen timeout restored, brightness override off, DND unchanged."
                     "EXTREME" -> "Screen stays on, brightness locked to full, sustained performance mode" +
                         (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && powerManager.isSustainedPerformanceModeSupported) " enabled" else " (unsupported on this device)") +
                         ", DND enabled."
                     else -> "No forced overrides - your normal device settings apply."
                 },
-                color = TextSecondary, fontSize = 11.sp
-            }
+                color = TextSecondary, 
+                fontSize = 11.sp
+            )
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -316,7 +311,7 @@ var thermalSync by remember { mutableStateOf(false) }
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            // Advanced Tools
+            // Advanced Tools Section
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Advanced Tools", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -342,8 +337,8 @@ var thermalSync by remember { mutableStateOf(false) }
                     buttonText = "CONFIGURE"
                 )
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Thermal Sync Card
             Row(
@@ -452,30 +447,34 @@ fun UtilityToggleRow(title: String, subtitle: String, icon: ImageVector, checked
 }
 
 @Composable
-fun AdvancedToolCard(modifier: Modifier, title: String, subtitle: String, icon: ImageVector, buttonText: String) {
+fun AdvancedToolCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    buttonText: String
+) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
             .background(BgCard)
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.Start
     ) {
-        Icon(icon, contentDescription = title, tint = TextPrimary, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.height(16.dp))
+        Icon(icon, contentDescription = title, tint = NeonCyan, modifier = Modifier.size(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(subtitle, color = TextSecondary, fontSize = 10.sp, letterSpacing = 1.sp)
+        Text(subtitle, color = TextSecondary, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(16.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.White.copy(alpha = 0.1f))
-                .clickable { /* Future implementation */ }
-                .padding(vertical = 10.dp),
-            contentAlignment = Alignment.Center
+        Button(
+            onClick = { },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.1f)),
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            Text(buttonText, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(buttonText, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
