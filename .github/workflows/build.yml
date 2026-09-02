@@ -16,36 +16,28 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Check project structure
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.4'
+
+      - name: Check project
         run: |
-          echo "=== Project root ==="
+          echo "=== Project ==="
           pwd
           ls -la
-
           echo "=== Gradle files ==="
-          find . -maxdepth 3 \( -name "gradlew" -o -name "build.gradle" -o -name "build.gradle.kts" -o -name "settings.gradle" -o -name "settings.gradle.kts" \) -print
-
-      - name: Prepare Gradle wrapper
-        run: |
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-          elif [ -f "./android/gradlew" ]; then
-            chmod +x ./android/gradlew
-          else
-            echo "ERROR: gradlew was not found"
-            exit 1
-          fi
+          find . -maxdepth 3 -type f \( \
+            -name "build.gradle" \
+            -o -name "build.gradle.kts" \
+            -o -name "settings.gradle" \
+            -o -name "settings.gradle.kts" \
+          \) -print
 
       - name: Build Debug APK
         run: |
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug --stacktrace
-          elif [ -f "./android/gradlew" ]; then
-            cd android
-            ./gradlew assembleDebug --stacktrace
-          fi
+          gradle assembleDebug --stacktrace
 
       - name: Find APK
         run: |
@@ -59,4 +51,3 @@ jobs:
           path: |
             **/build/outputs/apk/**/*.apk
           if-no-files-found: error
-          
