@@ -18,20 +18,44 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Check project files
+      - name: Check project structure
         run: |
+          echo "=== Project root ==="
           pwd
           ls -la
-          find . -maxdepth 2 -name "gradlew" -o -name "build.gradle*" -o -name "settings.gradle*"
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
+          echo "=== Gradle files ==="
+          find . -maxdepth 3 \( -name "gradlew" -o -name "build.gradle" -o -name "build.gradle.kts" -o -name "settings.gradle" -o -name "settings.gradle.kts" \) -print
+
+      - name: Prepare Gradle wrapper
+        run: |
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+          elif [ -f "./android/gradlew" ]; then
+            chmod +x ./android/gradlew
+          else
+            echo "ERROR: gradlew was not found"
+            exit 1
+          fi
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug --stacktrace
+          elif [ -f "./android/gradlew" ]; then
+            cd android
+            ./gradlew assembleDebug --stacktrace
+          fi
+
+      - name: Find APK
+        run: |
+          echo "=== APK files ==="
+          find . -type f -name "*.apk" -print
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: NetUP-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            **/build/outputs/apk/**/*.apk
+          if-no-files-found: error
